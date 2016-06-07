@@ -1,0 +1,41 @@
+<div class="jumbotron">
+  <h1>'Allo, 'Allo!</h1>
+
+  <div ng-controller="MainCtrl">
+    <p>The ID is {{equipe.id}}</p>
+    <p>The name is {{equipe.name }}</p>
+    <p>The color  is {{equipe.color | uppercase }}</p>
+
+    <input ng-model="search.name" placeholder="filter...">
+
+    <table class="table table-bordered"
+           infinite-scroll="loadMore()"
+           infinite-scroll-immediate-check="false"
+           infinite-scroll-distance="1" >
+
+      <tr >
+        <th class="col-2">
+          Name
+        </th >
+        <th class="col-3">
+
+          Year
+        </th >
+        <th class="col-4">Color</th >
+      </tr >
+
+      <tr ng-repeat="eq in equipes | filter:search">
+
+        <td >{{ eq.name }}</td >
+        <td >{{ eq.year }}</td >
+        <td >{{ eq.color }}</td >
+      </tr >
+
+
+    </table >
+    <button ng-click="test()" type="submit">Test</button>
+  </div>
+
+</div>
+
+</div>

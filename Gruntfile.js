@@ -7,11 +7,7 @@
 // use this if you want to recursively match all subfolders:
 // 'test/spec/**/*.js'
 
-var proxySnippet = require('grunt-connect-proxy/lib/utils').proxyRequest;
-
-module.exports = function (grunt) {
-
-  //grunt.loadNpmTasks('grunt-connect-proxy');
+module.exports = function(grunt) {
 
   // Time how long tasks take. Can help when optimizing build times
   require('time-grunt')(grunt);
@@ -23,13 +19,15 @@ module.exports = function (grunt) {
     cdnify: 'grunt-google-cdn'
   });
 
-
+  grunt.loadNpmTasks('grunt-connect-proxy');
 
   // Configurable paths for the application
   var appConfig = {
     app: require('./bower.json').appPath || 'app',
     dist: 'dist'
   };
+
+  var proxySnippet = require('grunt-connect-proxy/lib/utils').proxyRequest;
 
   // Define the configuration for all the tasks
   grunt.initConfig({
@@ -82,14 +80,16 @@ module.exports = function (grunt) {
         livereload: 35729
       },
       proxies: [{
-        context: '/data-service-path', // the context of the data service
+        context: '/api', // the context of the data service
         host: 'localhost', // wherever the data service is running
-        port: 8080 // the port that the data service is running on
+        port: 8080, // the port that the data service is running on
+        https: false,
+        xforward: false,
       }],
       livereload: {
         options: {
           open: true,
-          middleware: function (connect) {
+          middleware: function(connect) {
             return [
               connect.static('.tmp'),
               connect().use(
@@ -100,11 +100,12 @@ module.exports = function (grunt) {
                 '/app/styles',
                 connect.static('./app/styles')
               ),
-              connect.static(appConfig.app)
+              connect.static(appConfig.app),
+              proxySnippet
             ];
           }
         },
-        middleware: function (connect, options) {
+        middleware: function(connect, options) {
           var middlewares = [];
 
           if (!Array.isArray(options.base)) {
@@ -112,7 +113,7 @@ module.exports = function (grunt) {
           }
 
           // Setup the proxy
-          middlewares.push(require('grunt-connect-proxy/lib/utils').proxyRequest);
+          middlewares.push(proxySnippet);
 
           // Serve static files
           options.base.forEach(function(base) {
@@ -126,7 +127,7 @@ module.exports = function (grunt) {
       test: {
         options: {
           port: 9001,
-          middleware: function (connect) {
+          middleware: function(connect) {
             return [
               connect.static('.tmp'),
               connect.static('test'),
@@ -142,7 +143,13 @@ module.exports = function (grunt) {
       dist: {
         options: {
           open: true,
-          base: '<%= yeoman.dist %>'
+          base: '<%= yeoman.dist %>',
+          middleware: function(connect) {
+            return [
+              connect.static(appConfig.dist),
+              proxySnippet
+            ];
+          }
         }
       }
     },
@@ -203,7 +210,9 @@ module.exports = function (grunt) {
     postcss: {
       options: {
         processors: [
-          require('autoprefixer-core')({browsers: ['last 1 version']})
+          require('autoprefixer-core')({
+            browsers: ['last 1 version']
+          })
         ]
       },
       server: {
@@ -231,23 +240,23 @@ module.exports = function (grunt) {
     wiredep: {
       app: {
         src: ['<%= yeoman.app %>/index.html'],
-        ignorePath:  /\.\.\//
+        ignorePath: /\.\.\//
       },
       test: {
         devDependencies: true,
         src: '<%= karma.unit.configFile %>',
-        ignorePath:  /\.\.\//,
-        fileTypes:{
+        ignorePath: /\.\.\//,
+        fileTypes: {
           js: {
             block: /(([\s\t]*)\/{2}\s*?bower:\s*?(\S*))(\n|\r|.)*?(\/{2}\s*endbower)/gi,
-              detect: {
-                js: /'(.*\.js)'/gi
-              },
-              replace: {
-                js: '\'{{filePath}}\','
-              }
+            detect: {
+              js: /'(.*\.js)'/gi
+            },
+            replace: {
+              js: '\'{{filePath}}\','
             }
           }
+        }
       }
     },
 
@@ -294,7 +303,9 @@ module.exports = function (grunt) {
           '<%= yeoman.dist %>/styles'
         ],
         patterns: {
-          js: [[/(images\/[^''""]*\.(png|jpg|jpeg|gif|webp|svg))/g, 'Replacing references to images']]
+          js: [
+            [/(images\/[^''""]*\.(png|jpg|jpeg|gif|webp|svg))/g, 'Replacing references to images']
+          ]
         }
       }
     },
@@ -456,7 +467,7 @@ module.exports = function (grunt) {
   });
 
 
-  grunt.registerTask('serve', 'Compile then start a connect web server', function (target) {
+  grunt.registerTask('serve', 'Compile then start a connect web server', function(target) {
     if (target === 'dist') {
       return grunt.task.run(['build', 'connect:dist:keepalive']);
     }
@@ -472,7 +483,7 @@ module.exports = function (grunt) {
     ]);
   });
 
-  grunt.registerTask('server', 'DEPRECATED TASK. Use the "serve" task instead', function (target) {
+  grunt.registerTask('server', 'DEPRECATED TASK. Use the "serve" task instead', function(target) {
     grunt.log.warn('The `server` task has been deprecated. Use `grunt serve` to start a server.');
     grunt.task.run(['serve:' + target]);
   });
@@ -505,7 +516,7 @@ module.exports = function (grunt) {
   ]);
 
   grunt.registerTask('default', [
-  //  'newer:jshint',
+    //  'newer:jshint',
     'newer:jscs',
     'test',
     'build'
